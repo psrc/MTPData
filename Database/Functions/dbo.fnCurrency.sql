@@ -1,0 +1,17 @@
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_NULLS ON
+GO
+
+CREATE FUNCTION [dbo].[fnCurrency] (@Money MONEY)
+RETURNS VARCHAR(25)
+AS 
+BEGIN
+DECLARE @inputAsStr varchar(25)
+SELECT @inputAsStr = CONVERT(VARCHAR(25), @MONEY, 1)
+
+RETURN '$' + REPLACE(@inputAsStr,'.00','')
+END
+GO
+GRANT EXECUTE ON  [dbo].[fnCurrency] TO [db_fnExecutor]
+GO
