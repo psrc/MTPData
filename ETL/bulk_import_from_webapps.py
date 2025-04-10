@@ -91,6 +91,41 @@ df_project.to_sql(name='project', schema='stg', con=engine, if_exists='replace',
 df_prioritization = reshape_prioritization(df)
 df_prioritization.to_sql(name='prioritization', schema='stg', con=engine, if_exists='replace', index=False)
 
+def create_cosponsors_df(df):
+    """Create a dataframe with UUID and cosponsor numbers from the list in column df.cosponsors"""
+    try:
+        # Select only the uuid and cosponsors columns
+        df_cosponsors = df[['uuid', 'cosponsors']].copy()
+        
+        # Explode the cosponsors list to create a row for each cosponsor dictionary
+        df_cosponsors = df_cosponsors.explode('cosponsors')
+        
+        # Filter out rows with None or empty cosponsors
+        df_cosponsors = df_cosponsors[df_cosponsors['cosponsors'].notna() & (df_cosponsors['cosponsors'] != '')]
+        
+        # Extract the 'number' value from each cosponsor dictionary and convert to integer
+        df_cosponsors['cosponsor_number'] = df_cosponsors['cosponsors'].apply(
+            lambda x: int(x.get('number')) if isinstance(x, dict) and 'number' in x else None
+        )
+        
+        # Drop the original cosponsors column and rows with None cosponsor_number
+        df_cosponsors = df_cosponsors.drop('cosponsors', axis=1)
+        df_cosponsors = df_cosponsors[df_cosponsors['cosponsor_number'].notna()]
+        
+        # Rename columns to PascalCase
+        df_cosponsors = rename_columns(df_cosponsors)
+        
+        return df_cosponsors
+    except Exception as e:
+        print(f"Error creating cosponsors dataframe: {e}")
+        raise
+
+# Create the cosponsors dataframe
+df_cosponsors = create_cosponsors_df(df)
+df_cosponsors.dtypes
+
+df_cosponsors.to_sql(name='cosponsors', schema='stg', con=engine, if_exists='replace', index=False)
+
 print(json_data)
 
 df_project.columns
