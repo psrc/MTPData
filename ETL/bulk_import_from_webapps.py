@@ -23,26 +23,26 @@ except UnicodeDecodeError:
 projects_data = []
 for item in json_data:
     project = item.get('mtp_project', {})
-    project_copy = {k: v for k, v in project.items() if k != 'mtp_improvement_types'}
+    project_copy = {k: v for k, v in project.items()} 
     projects_data.append(project_copy)
 
 df = pd.DataFrame(projects_data)
-df['uuid'] = df.apply(lambda _: uuid.uuid4(), axis=1)
-df = df[['id', 'uuid'] + [col for col in df.columns if col not in ['id', 'uuid']]]
+df['AppGUID'] = df.apply(lambda _: uuid.uuid4(), axis=1)
+df = df[['id', 'AppGUID'] + [col for col in df.columns if col not in ['id', 'AppGUID']]]
 
 def reshape_prioritization(df):
     """ Reshape the prioritization columns into a long format.
         include columns 'ID', 'AppGUID' and 'MTPID'"""
     try:
-        condition = df.columns.isin(['id', 'uuid', 'project_id']) | df.columns.str.startswith('prioritization_')
+        condition = df.columns.isin(['id', 'AppGUID', 'project_id']) | df.columns.str.startswith('prioritization_')
         df = df.loc[:, condition]
         df = df.drop('prioritization_a4_continued', axis=1, errors='ignore')
         prioritization_columns = [col for col in df.columns if (col.startswith('prioritization_') )]
         for col in prioritization_columns:
             df[col] = df[col].map(lambda x: 1 if isinstance(x, bool) and x else 0 if isinstance(x, bool) and not x else x)
-        df_prioritization = df.melt(id_vars=['id', 'uuid', 'project_id'], var_name='WebappsID', value_name='Response') 
+        df_prioritization = df.melt(id_vars=['id', 'AppGUID', 'project_id'], var_name='WebappsID', value_name='Response') 
         df_prioritization = df_prioritization.sort_values(by=['id', 'WebappsID'])
-        df_prioritization = df_prioritization.rename(columns={'id': 'ID', 'uuid': 'AppGUID', 'project_id': 'MTPID'})
+        df_prioritization = df_prioritization.rename(columns={'id': 'ID', 'project_id': 'MTPID'})
         return(df_prioritization)
 
     except Exception as e:
@@ -85,51 +85,56 @@ def prepare_project(df):
         raise
 
 
-df_project = prepare_project(df)
-df_project.to_sql(name='project', schema='stg', con=engine, if_exists='replace', index=False)
-
-df_prioritization = reshape_prioritization(df)
-df_prioritization.to_sql(name='prioritization', schema='stg', con=engine, if_exists='replace', index=False)
-
 def create_cosponsors_df(df):
-    """Create a dataframe with UUID and cosponsor numbers from the list in column df.cosponsors"""
+    """Create a dataframe with AppGUID and cosponsor numbers from the list in column df.cosponsors"""
     try:
-        # Select only the uuid and cosponsors columns
-        df_cosponsors = df[['uuid', 'cosponsors']].copy()
-        
-        # Explode the cosponsors list to create a row for each cosponsor dictionary
+        df_cosponsors = df[['AppGUID', 'cosponsors']].copy()
         df_cosponsors = df_cosponsors.explode('cosponsors')
-        
-        # Filter out rows with None or empty cosponsors
         df_cosponsors = df_cosponsors[df_cosponsors['cosponsors'].notna() & (df_cosponsors['cosponsors'] != '')]
-        
-        # Extract the 'number' value from each cosponsor dictionary and convert to integer
         df_cosponsors['cosponsor_number'] = df_cosponsors['cosponsors'].apply(
             lambda x: int(x.get('number')) if isinstance(x, dict) and 'number' in x else None
         )
-        
-        # Drop the original cosponsors column and rows with None cosponsor_number
         df_cosponsors = df_cosponsors.drop('cosponsors', axis=1)
         df_cosponsors = df_cosponsors[df_cosponsors['cosponsor_number'].notna()]
-        
-        # Rename columns to PascalCase
         df_cosponsors = rename_columns(df_cosponsors)
-        
         return df_cosponsors
     except Exception as e:
         print(f"Error creating cosponsors dataframe: {e}")
         raise
 
-# Create the cosponsors dataframe
-df_cosponsors = create_cosponsors_df(df)
-df_cosponsors.dtypes
+def create_improvement_types_df(df):
+    """Create a dataframe with AppGUID and improvement type numbers from the list in column df.mtp_improvement_types"""
+    try:
+        df_improvement_types = df[['AppGUID', 'mtp_improvement_types']].copy()
+        df_improvement_types = df_improvement_types.explode('mtp_improvement_types')
+        df_improvement_types = df_improvement_types[df_improvement_types['mtp_improvement_types'].notna() & 
+                                                   (df_improvement_types['mtp_improvement_types'] != '')]
+        df_improvement_types['improvement_type_number'] = df_improvement_types['mtp_improvement_types'].apply(
+            lambda x: int(x.get('number')) if isinstance(x, dict) and 'number' in x else None
+        )
+        df_improvement_types = df_improvement_types.drop('mtp_improvement_types', axis=1)
+        df_improvement_types = df_improvement_types[df_improvement_types['improvement_type_number'].notna()]
+        df_improvement_types = rename_columns(df_improvement_types)
+        
+        return df_improvement_types
+    except Exception as e:
+        print(f"Error creating improvement types dataframe: {e}")
+        raise
 
+# Create the project table
+df_project = prepare_project(df)
+df_project.to_sql(name='project', schema='stg', con=engine, if_exists='replace', index=False)
+
+# Create the prioritization table
+df_prioritization = reshape_prioritization(df)
+df_prioritization.to_sql(name='prioritization', schema='stg', con=engine, if_exists='replace', index=False)
+
+# Create the cosponsors table
+df_cosponsors = create_cosponsors_df(df)
 df_cosponsors.to_sql(name='cosponsors', schema='stg', con=engine, if_exists='replace', index=False)
 
-print(json_data)
-
-df_project.columns
-df_project.Cosponsors
-df_project.MtpImprovementTypes
+# Create the improvement types table
+df_improvement_types = create_improvement_types_df(df)
+df_improvement_types.to_sql(name='improvement_types', schema='stg', con=engine, if_exists='replace', index=False)
 
 print("run complete")
