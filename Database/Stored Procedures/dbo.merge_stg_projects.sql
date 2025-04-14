@@ -19,7 +19,7 @@ as
         isnull(sp.ContactEmail, p.ContactEmail) as ContactEmail,
         isnull(sp.ConstantDollarYear, p.EstCostYear) as EstCostYear,
         isnull(sp.CompletionYear, p.CompletionYear) as CompletionYear,
-        isnull(sp.MTPStatus, p.MTPStatus) as MTPStatus,
+        isnull(p.MTPStatus, null) as MTPStatus,
         isnull(sp.[Location], p.ProjectOn) as ProjectOn,
         isnull(sp.EndpointA, p.ProjectFrom) as ProjectFrom,
         isnull(sp.EndpointB, p.ProjectTo) as ProjectTo,
