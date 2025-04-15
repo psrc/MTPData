@@ -6,6 +6,7 @@ import sys
 import json
 import pyodbc
 import sqlalchemy
+from sqlalchemy.sql import select, func
 import uuid
 
 conn_string = "Driver={ODBC Driver 17 for SQL Server};Server=SQLserver;Database=MTPData;trusted_connection=yes;"
@@ -26,9 +27,31 @@ for item in json_data:
     project_copy = {k: v for k, v in project.items()} 
     projects_data.append(project_copy)
 
+
 df = pd.DataFrame(projects_data)
 df['AppGUID'] = df.apply(lambda _: uuid.uuid4(), axis=1)
 df = df[['id', 'AppGUID'] + [col for col in df.columns if col not in ['id', 'AppGUID']]]
+
+def calculate_mtpids(df):
+    """ Calculate the MTPID for each project in the dataframe that doesn't already have an MTPID."""
+    try:
+        # get the next empty mtpid from the database
+        with engine.connect() as conn:
+            next_empty_mtpid = conn.scalar(
+                select(func.dbo.next_mtpid())
+            )
+        mask = df[df['project_id'].isna() | df['project_id'] == 0]
+        num_rows_to_update = mask.project_id.count()
+        print(f"num_rows_to_update: {num_rows_to_update}")
+        max_new_mtpid = int(next_empty_mtpid + num_rows_to_update) - 1
+        print(f"next empty mtpid: {next_empty_mtpid}, max new mtpid: {max_new_mtpid}")
+        vals = range(next_empty_mtpid, next_empty_mtpid + num_rows_to_update)
+        df.loc[mask, 'project_id'] = vals
+        return(df)
+
+    except Exception as e:
+        print(e.args[0])
+        raise    
 
 def reshape_prioritization(df):
     """ Reshape the prioritization columns into a long format.
@@ -77,6 +100,7 @@ def prepare_project(df):
     """Prepare the project dataframe for importation into the database"""
     try:
         df2 = remove_prioritization_cols(df)
+        df2 = calculate_mtpids(df2)
         df2 = rename_columns(df2)
         return(df2)
 
@@ -127,7 +151,7 @@ df_project.to_sql(name='project', schema='stg', con=engine, if_exists='replace',
 
 # Create the prioritization table
 df_prioritization = reshape_prioritization(df)
-df_prioritization.to_sql(name='prioritization', schema='stg', con=engine, if_exists='replace', index=False)
+df_prioritization.to_sql(name='scores', schema='stg', con=engine, if_exists='replace', index=False)
 
 # Create the cosponsors table
 df_cosponsors = create_cosponsors_df(df)
@@ -135,6 +159,6 @@ df_cosponsors.to_sql(name='cosponsors', schema='stg', con=engine, if_exists='rep
 
 # Create the improvement types table
 df_improvement_types = create_improvement_types_df(df)
-df_improvement_types.to_sql(name='improvement_types', schema='stg', con=engine, if_exists='replace', index=False)
+df_improvement_types.to_sql(name='scope_elements', schema='stg', con=engine, if_exists='replace', index=False)
 
 print("run complete")
