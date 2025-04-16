@@ -7,7 +7,10 @@ import json
 import pyodbc
 import sqlalchemy
 from sqlalchemy.sql import select, func
+from sqlalchemy import text
 import uuid
+
+TARGET_REVISION_ID = 67
 
 conn_string = "Driver={ODBC Driver 17 for SQL Server};Server=SQLserver;Database=MTPData;trusted_connection=yes;"
 engine = sqlalchemy.create_engine("mssql+pyodbc:///?odbc_connect=%s" % conn_string)
@@ -35,23 +38,24 @@ df = df[['id', 'AppGUID'] + [col for col in df.columns if col not in ['id', 'App
 def calculate_mtpids(df):
     """ Calculate the MTPID for each project in the dataframe that doesn't already have an MTPID."""
     try:
-        # get the next empty mtpid from the database
         with engine.connect() as conn:
             next_empty_mtpid = conn.scalar(
                 select(func.dbo.next_mtpid())
             )
-        mask = df[df['project_id'].isna() | df['project_id'] == 0]
-        num_rows_to_update = mask.project_id.count()
-        print(f"num_rows_to_update: {num_rows_to_update}")
+        mask = df['project_id'].isna() | (df['project_id'] == 0)
+        num_rows_to_update = mask.sum()
         max_new_mtpid = int(next_empty_mtpid + num_rows_to_update) - 1
-        print(f"next empty mtpid: {next_empty_mtpid}, max new mtpid: {max_new_mtpid}")
-        vals = range(next_empty_mtpid, next_empty_mtpid + num_rows_to_update)
-        df.loc[mask, 'project_id'] = vals
-        return(df)
+        
+        if num_rows_to_update > 0:
+            new_ids = list(range(next_empty_mtpid, next_empty_mtpid + num_rows_to_update))
+            df.loc[mask, 'project_id'] = new_ids
+        
+        return df
 
     except Exception as e:
-        print(e.args[0])
+        print(f"Exception in calculate_mtpids(): {e.args[0]}")
         raise    
+
 
 def reshape_prioritization(df):
     """ Reshape the prioritization columns into a long format.
@@ -160,5 +164,17 @@ df_cosponsors.to_sql(name='cosponsors', schema='stg', con=engine, if_exists='rep
 # Create the improvement types table
 df_improvement_types = create_improvement_types_df(df)
 df_improvement_types.to_sql(name='scope_elements', schema='stg', con=engine, if_exists='replace', index=False)
+
+# run the stored procedure to import the data into the main tables
+try:
+    sql = f"EXEC stg.stage_to_revision {TARGET_REVISION_ID}"
+    with engine.connect() as conn:
+        with conn.begin():
+            conn.execute(text(sql))
+    print(f"tables staged and imported into revision {TARGET_REVISION_ID}")
+except Exception as e:
+    print(f"Error running the sproc stg.stage_to_review: {e}")
+    print("staging tables written but not imported into a revision")
+
 
 print("run complete")
