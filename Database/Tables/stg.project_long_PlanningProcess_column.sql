@@ -1,4 +1,4 @@
-CREATE TABLE [stg].[project]
+CREATE TABLE [stg].[project_long_PlanningProcess_column]
 (
 [Id] [bigint] NULL,
 [Appguid] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
@@ -11,7 +11,7 @@ CREATE TABLE [stg].[project]
 [NewProject] [bit] NULL,
 [ModifyFromUnprogrammedToConstrained] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [ModifyConstrainedProjectDetails] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
-[ProjectId] [bigint] NULL,
+[ProjectId] [float] NULL,
 [SponsoringAgencyId] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [Title] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [ContactFirstName] [varchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,

@@ -2,12 +2,12 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_NULLS ON
 GO
-CREATE procedure [stg].[merge_stg_projects] @revision_id smallint
+CREATE procedure [stg].[merge_stg_projects] @RevisionID smallint
 as
 ;with cte as (
     select 
         AppGUID,
-        @revision_id as RevisionID,
+        @RevisionID as RevisionID,
         getdate() DateStamp,
         ProjectId as MTPID,
         isnull(sp.SponsoringAgencyId, p.Agency) as Agency,
@@ -17,9 +17,9 @@ as
         concat(ContactFirstName, ' ', ContactLastName) as ContactName,
         isnull(sp.ContactPhone, p.ContactPhone) as ContactPhone,
         isnull(sp.ContactEmail, p.ContactEmail) as ContactEmail,
-        isnull(sp.ConstantDollarYear, p.EstCostYear) as EstCostYear,
-        isnull(sp.CompletionYear, p.CompletionYear) as CompletionYear,
-        isnull(p.MTPStatus, null) as MTPStatus,
+        isnull(year(sp.ConstantDollarYear), p.EstCostYear) as EstCostYear,
+        isnull(year(sp.CompletionYear), p.CompletionYear) as CompletionYear,
+        isnull(p.MTPStatus, 1) as MTPStatus, -- 1='candidate'
         isnull(sp.[Location], p.ProjectOn) as ProjectOn,
         isnull(sp.EndpointA, p.ProjectFrom) as ProjectFrom,
         isnull(sp.EndpointB, p.ProjectTo) as ProjectTo,
@@ -28,7 +28,7 @@ as
         isnull(sp.CountyID, p.CountyID) as CountyID,
         p.StateRouteID,
         isnull(sp.FunctionalClass, p.FuncClassID) as FuncClassID,
-        isnull(sp.StartYear, p.StartYear) as StartYear,
+        isnull(year(sp.StartYear), p.StartYear) as StartYear,
         p.WebLinks,
         -- DatePosted,
         -- DateOverwritten,

@@ -1,5 +1,9 @@
 CREATE ROLE [db_spExecutor]
 AUTHORIZATION [dbo]
+EXEC sp_addrolemember N'db_spExecutor', N'PSRC\CHelmann'
+
+EXEC sp_addrolemember N'db_spExecutor', N'PSRC\Clam'
+
 GO
 ALTER ROLE [db_spExecutor] ADD MEMBER [PSRC\JBarnes]
 GO

@@ -40,5 +40,7 @@ ALTER TABLE [dbo].[tblReviewProject] ADD CONSTRAINT [pk_tblProject_APPGUID] PRIM
 GO
 CREATE NONCLUSTERED INDEX [IDX_ReviewProject_MTPID] ON [dbo].[tblReviewProject] ([MTPID]) ON [PRIMARY]
 GO
+ALTER TABLE [dbo].[tblReviewProject] ADD CONSTRAINT [tblReviewProject_unique_mtpid_revision_id] UNIQUE NONCLUSTERED ([MTPID], [RevisionID]) ON [PRIMARY]
+GO
 CREATE NONCLUSTERED INDEX [IDX_ReviewProject_RevisionID] ON [dbo].[tblReviewProject] ([RevisionID]) ON [PRIMARY]
 GO

@@ -1,3 +1,7 @@
+
+EXEC sp_addrolemember N'db_datareader', N'PSRC\CHelmann'
+
+EXEC sp_addrolemember N'db_datareader', N'PSRC\Clam'
 ALTER ROLE [db_datareader] ADD MEMBER [PSRC\JBarnes]
 GO
 ALTER ROLE [db_datareader] ADD MEMBER [PSRC\JQuick]
