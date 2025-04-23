@@ -2,9 +2,13 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_NULLS ON
 GO
-create function [dbo].[mtpfn_RevisionScoresBySectionAndProject](@RevisionID int)
+CREATE function [dbo].[mtpfn_RevisionScoresBySectionAndProject](@RevisionID int)
 returns table 
 as 
+/*
+    Calculates Plan Consistency Scores for each project in revision @RevisionID.  
+    Returns one row per project per Plan Consistency Measure (aka "section").
+*/
 return (
     with scores_by_questiongroup as (
         select rp.AppGUID, proj.MTPID, proj.Title, v.QuestionGroup, v.Section,

@@ -5,6 +5,11 @@ GO
 CREATE function [dbo].[mtpfn_RevisionProjects](@RevisionID tinyint)
 returns table 
 as
+/*
+    Returns a list of attributes for each project in revision @RevisionID.
+    Includes total consistency score, as well as scores broken out by measure.
+    Includes scope element columns for all possible scope elements as of the 2026 Plan.
+*/
 return
 (
     SELECT r.RevisionName, 

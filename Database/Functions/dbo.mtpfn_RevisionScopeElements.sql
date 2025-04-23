@@ -2,9 +2,17 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_NULLS ON
 GO
-create function [dbo].[mtpfn_RevisionScopeElements](@RevisionID smallint) 
+CREATE function [dbo].[mtpfn_RevisionScopeElements](@RevisionID smallint) 
 returns table 
 as 
+/*
+    Returns a list of scope elements chosen for a given project in revision @RevisionID
+    per the table tblReviewProjCharacteristics.  
+    Returns one row per project, with each scope element expressed as a column
+      populated by 0's and 1's.  
+    1 = the scope element was chosen for the project
+    0 = the scope element was not chosen for the project
+*/
 return 
 (
         select AppGUID, MTPID,

@@ -2,16 +2,13 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_NULLS ON
 GO
-CREATE function [dbo].[mtpfn_RevisionScoresPivoted](@RevisionID smallint)
-returns table 
+CREATE view [dbo].[viewRevisionScoresPivoted]
 as 
 /*
-    Calculates Regional Transportation Plan Consistency scores for all projects in revision @RevisionID.
-    Returns one row per project, with separate columns for each measure.  
+    Calculates Regional Transportation Plan Consistency scores for all projects in revisions.
+    Returns one row per project per revision, with separate columns for each measure.  
     It also returns column "TotalScore" which is the sum of all the measure-specific scores for the project.
 */
-return 
-(
     with section_scores as (
         select AppGUID, 
             MTPID, 
@@ -27,7 +24,7 @@ return
         from 
         (
             select ssp.AppGUID, ssp.MTPID, ssp.Section, ssp.Score 
-            from mtpfn_RevisionScoresBySectionAndProject(@RevisionID) ssp 
+            from viewRevisionScoresBySectionAndProject ssp 
         ) as qry 
         pivot 
         (
@@ -37,8 +34,7 @@ return
                             [Travel Reliability])
         ) as PivotTable
     )
-    select ss.*, s.Score as TotalScore
+    select s.RevisionID,  ss.*,  s.Score as TotalScore
     from section_scores ss 
-        join dbo.mtpfn_RevisionScoresByProject(@RevisionID) as s ON ss.AppGUID = s.AppGUID
-)
+        left join viewRevisionScoresByProject as s on ss.AppGUID = s.AppGUID
 GO
