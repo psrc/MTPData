@@ -83,8 +83,10 @@ return
     FROM tblReviewProject rp
         join tblReviewProjEdition pe ON rp.AppGUID = pe.APPGUID
         join tblRevision r ON rp.RevisionID = r.RevisionID
-        join dbo.mtpfn_RevisionScopeElements(@RevisionID) as se on rp.AppGUID = se.AppGUID
-        join dbo.mtpfn_RevisionScoresPivoted(@RevisionID) ssp on rp.AppGUID = ssp.AppGUID
+        --join dbo.mtpfn_RevisionScopeElements(@RevisionID) as se on rp.AppGUID = se.AppGUID
+        join viewRevisionScopeElements as se on rp.AppGUID = se.AppGUID
+        -- join dbo.mtpfn_RevisionScoresPivoted(@RevisionID) ssp on rp.AppGUID = ssp.AppGUID
+        join dbo.viewRevisionScoresPivoted ssp on rp.AppGUID = ssp.AppGUID
         LEFT JOIN tblAgency a ON rp.Agency = a.AgencyNo
         LEFT JOIN tblMTPStatus m ON rp.MTPStatus = m.MTPStatusID
         LEFT JOIN tblCounty c ON rp.CountyID = c.CountyID

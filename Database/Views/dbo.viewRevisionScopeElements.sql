@@ -2,20 +2,17 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_NULLS ON
 GO
-CREATE function [dbo].[mtpfn_RevisionScopeElements](@RevisionID smallint) 
-returns table 
+CREATE view [dbo].[viewRevisionScopeElements]
 as 
 /*
-    Returns a list of scope elements chosen for a given project in revision @RevisionID
-    per the table tblReviewProjCharacteristics.  
-    Returns one row per project, with each scope element expressed as a column
+    Returns a list of scope elements chosen for each project in revisions 
+        per the table tblReviewProjCharacteristics.  
+    Returns one row per project per revision, with each scope element expressed as a column
       populated by 0's and 1's.  
     1 = the scope element was chosen for the project
     0 = the scope element was not chosen for the project
 */
-return 
-(
-        select AppGUID, MTPID,
+        select AppGUID, RevisionID, MTPID, 
             [New Roadway Facility] = ISNULL([New Roadway Facility], 0),
             [Roadway Relocation] = ISNULL([Roadway Relocation], 0),
             [Add or Remove General Purpose Capacity Lanes] = ISNULL([Add or Remove General Purpose Capacity Lanes], 0),
@@ -53,11 +50,10 @@ return
             [Other Preservation/Maintenance] = ISNULL([Other Preservation/Maintenance], 0)
         from 
         (
-            select rp.appGUID, rp.MTPID, c.[Name] as ScopeElement
+            select rp.appGUID, rp.RevisionID, rp.MTPID, c.[Name] as ScopeElement
             from tblReviewProjCharacteristics pc 
                 join tblCharacteristics c ON pc.CharacteristicID = c.[ID]
                 join tblReviewProject rp on pc.appGUID = rp.appGUID 
-            where rp.revisionID = @RevisionID
         ) as qry
         PIVOT 
         (
@@ -101,5 +97,4 @@ return
         [Other Preservation/Maintenance]
             )
         ) as PivotTable
-);
 GO
