@@ -10,12 +10,12 @@ from sqlalchemy.sql import select, func
 from sqlalchemy import text
 import uuid
 
-TARGET_REVISION_ID = 67
+TARGET_REVISION_ID = 68
 
 conn_string = "Driver={ODBC Driver 17 for SQL Server};Server=SQLserver;Database=MTPData;trusted_connection=yes;"
 engine = sqlalchemy.create_engine("mssql+pyodbc:///?odbc_connect=%s" % conn_string)
 
-json_file = './ETL/mtp_projects.json'
+json_file = './ETL/mtp_projects_accepted_250421.json'
 
 try:
     with open(json_file, 'r', encoding='utf-8') as f:
@@ -69,6 +69,8 @@ def reshape_prioritization(df):
             df[col] = df[col].map(lambda x: 1 if isinstance(x, bool) and x else 0 if isinstance(x, bool) and not x else x)
         df_prioritization = df.melt(id_vars=['id', 'AppGUID', 'project_id'], var_name='WebappsID', value_name='Response') 
         df_prioritization = df_prioritization.sort_values(by=['id', 'WebappsID'])
+        # Convert Response column to integer, preserving nulls
+        df_prioritization['Response'] = pd.to_numeric(df_prioritization['Response'], errors='coerce').astype('Int64')
         df_prioritization = df_prioritization.rename(columns={'id': 'ID', 'project_id': 'MTPID'})
         return(df_prioritization)
 
@@ -154,8 +156,8 @@ df_project = prepare_project(df)
 df_project.to_sql(name='project', schema='stg', con=engine, if_exists='replace', index=False)
 
 # Create the prioritization table
-df_prioritization = reshape_prioritization(df)
-df_prioritization.to_sql(name='scores', schema='stg', con=engine, if_exists='replace', index=False)
+df_scores = reshape_prioritization(df)
+df_scores.to_sql(name='scores', schema='stg', con=engine, if_exists='replace', index=False)
 
 # Create the cosponsors table
 df_cosponsors = create_cosponsors_df(df)
@@ -170,7 +172,8 @@ try:
     sql = f"EXEC stg.stage_to_revision {TARGET_REVISION_ID}"
     with engine.connect() as conn:
         with conn.begin():
-            conn.execute(text(sql))
+           conn.execute(text(sql))
+           pass
     print(f"tables staged and imported into revision {TARGET_REVISION_ID}")
 except Exception as e:
     print(f"Error running the sproc stg.stage_to_review: {e}")
