@@ -4,6 +4,12 @@ SET ANSI_NULLS ON
 GO
 CREATE procedure [stg].[merge_cosponsors] @RevisionID smallint 
 as 
+/*
+    Merge any cosponsrs in the staging table stg.cosponsors 
+    into the revision defined by @RevisionID.
+    Any cosponsors that arleady are listed for projects in the revision
+      are ignored (they're not inserted a second time).
+*/
 ;with cte as (
     select c.Appguid, 
         c.CosponsorNumber as AgencyNo

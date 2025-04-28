@@ -2,8 +2,13 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_NULLS ON
 GO
-create procedure [stg].[merge_scores]
+CREATE procedure [stg].[merge_scores]
 as
+/*
+    Merge consistency scores from stg.scores into tblReviewProjScores.
+    Inserts them if the AppGUID-QuestionName combination doesn't exist 
+        in the destination table, otherwise does nothing.
+*/
 ;with cte as (
     select s.AppGUID, s.MTPID, q.QuestionName, s.Response
     from stg.scores s 

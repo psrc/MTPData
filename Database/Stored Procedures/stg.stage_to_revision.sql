@@ -9,5 +9,6 @@ begin
     exec stg.merge_cosponsors @RevisionID
     exec stg.merge_scope_elements @RevisionID
     exec stg.merge_proj_edition @RevisionID
+    exec stg.merge_scores
 end
 GO

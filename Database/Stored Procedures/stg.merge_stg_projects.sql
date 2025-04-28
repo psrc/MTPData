@@ -4,6 +4,13 @@ SET ANSI_NULLS ON
 GO
 CREATE procedure [stg].[merge_stg_projects] @RevisionID smallint
 as
+    /*
+        Merge data from stg.project and dbo.tblProject into a revision (in tblReviewProject).
+        When a project in the staging table also exists as a posted table, any data that 
+          was in the newly-submitted version is used, but any fields that were submitted as null
+          values default to that field in the posted data.  
+        Inserts the record if the AppGUID doesn't exist in the table yet, otherwise does nothing.
+    */
 ;with cte as (
     select 
         AppGUID,
