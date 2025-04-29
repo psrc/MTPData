@@ -59,6 +59,11 @@ select @appguid, mtpid, QuestionName, Response
 from tblPrioritization
 where MTPID = @mtpid
 
+insert into tblReviewProjScores (AppGUID, MTPID, QuestionName, Response)
+select @AppGUID, mtpid, QuestionName, Response 
+from tblProjScores 
+where MTPID = @mtpid
+
 INSERT INTO tblReviewProjCosponsors (AppGUID, AgencyNo)
 SELECT @appguid, AgencyNo
 FROM tblProjCosponsors

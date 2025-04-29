@@ -74,6 +74,12 @@ FROM tblPrioritization pr
 	JOIN tblReviewProject p ON pr.MTPID = p.MTPID
 WHERE p.RevisionID = @RevisionID AND p.Edit = 0
 
+INSERT INTO tblReviewProjScores(AppGUID, MTPID, QuestionName, Response)
+SELECT p.AppGUID, p.MTPID, pr.QuestionName, pr.Response
+FROM tblProjScores pr
+	JOIN tblReviewProject p ON pr.MTPID = p.MTPID
+WHERE p.RevisionID = @RevisionID AND p.Edit = 0
+
 -- Add in current & historical Edition info
 -- This doesn't roll any projects forward into a new edition
 INSERT INTO tblReviewProjEdition
@@ -145,6 +151,14 @@ WHERE mtpid in (
 	where rp.RevisionID = @RevisionID
 )
 
+
+DELETE FROM tblProjScores
+WHERE MTPID IN (
+	select distinct MTPID 
+	from tblReviewProject rp
+	where rp.RevisionID = @RevisionID
+)
+
 -- add the new projects to the posted tables
 INSERT INTO tblProject (
 	MTPID, Agency, Title, ProjDesc, TotProjCost,
@@ -188,6 +202,11 @@ FROM tblReviewProject as rp
     join tblReviewPrioritization as pr on rp.AppGUID = pr.AppGUID 
 where rp.RevisionID = @RevisionID 
 
+INSERT INTO tblProjScores (MTPID, QuestionName, Response)
+SELECT ps.MTPID, ps.QuestionName, ps.Response
+from tblReviewProject rp 
+    join tblReviewProjScores ps on rp.AppGUID = ps.AppGUID
+where rp.RevisionID = @RevisionID
 
 -- Add the new Edition associated with the revision to all projects in the revision
 --  except those with MTPStatus = "Not in MTP" or MTPStatus = "Cancelled"

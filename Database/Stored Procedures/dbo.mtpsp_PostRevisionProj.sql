@@ -2,9 +2,6 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_NULLS ON
 GO
-
-
-
 CREATE   procedure [dbo].[mtpsp_PostRevisionProj]
 	@MTPID int,
 	@Revision int
@@ -63,6 +60,12 @@ INSERT INTO tblPrioritization (MTPID, QuestionName, Response)
 SELECT p.MTPID, pe.QuestionName, pe.Response
 FROM tblReviewProject p
 	join tblReviewPrioritization pe on p.APPGUID = pe.APPGUID
+where p.RevisionID = @Revision AND p.MTPID = @MTPID
+
+INSERT INTO tblProjScores (MTPID, QuestionName, Response)
+SELECT p.MTPID, pe.QuestionName, pe.Response
+FROM tblReviewProject p
+	join tblReviewProjScores pe on p.APPGUID = pe.APPGUID
 where p.RevisionID = @Revision AND p.MTPID = @MTPID
 
 INSERT INTO tblProjectLog (MTPID, RevisionID, NoteDate, Author, Note) 

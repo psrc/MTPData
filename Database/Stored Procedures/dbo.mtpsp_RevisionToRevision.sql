@@ -3,7 +3,7 @@ GO
 SET ANSI_NULLS ON
 GO
 
-create   PROCEDURE [dbo].[mtpsp_RevisionToRevision] 
+CREATE   PROCEDURE [dbo].[mtpsp_RevisionToRevision] 
 	@MTPID int,
 	@FromRevisionID INT,
 	@ToRevisionID int
@@ -62,6 +62,11 @@ BEGIN TRAN
     INSERT INTO tblReviewPrioritization (AppGUID, MTPID, QuestionName, Response)
     SELECT @ToAppGUID, MTPID, QuestionName, Response 
     from tblReviewPrioritization
+    where AppGUID = @FromAppGUID
+
+    INSERT INTO tblReviewProjScores (AppGUID, MTPID, QuestionName, Response)
+    SELECT @ToAppGUID, MTPID, QuestionName, Response 
+    from tblReviewProjScores
     where AppGUID = @FromAppGUID
 
 	INSERT INTO tblReviewProjEdition 
