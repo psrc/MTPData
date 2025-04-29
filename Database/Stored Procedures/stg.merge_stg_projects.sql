@@ -9,7 +9,8 @@ as
         When a project in the staging table also exists as a posted table, any data that 
           was in the newly-submitted version is used, but any fields that were submitted as null
           values default to that field in the posted data.  
-        Inserts the record if the AppGUID doesn't exist in the table yet, otherwise does nothing.
+        Inserts the record if the MTPID doesn't exist in the table yet in the revision @RevisionID, 
+          otherwise does nothing.
     */
 ;with cte as (
     select 
@@ -45,7 +46,7 @@ as
         isnull(sp.PlanningProcess, null) as PlanningProcess,
         isnull(sp.LettersOfConcurrence, null) as LettersOfConcurrence,
         isnull(sp.FundsDescription, null) as FundsDescription,
-        isnull(sp.FundsCommitted, null) as FundsCommitted,
+        isnull(sp.FundsCommitted, 0) as FundsCommitted,
         isnull([Id], 0) as ApplicationID
     from stg.project sp
         left join dbo.tblProject p on sp.ProjectId = p.MTPID

@@ -2,8 +2,8 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_NULLS ON
 GO
-CREATE view [dbo].[viewRevisionScopeElements]
-as 
+CREATE VIEW [dbo].[viewReviewScopeElements]
+AS 
 /*
     Returns a list of scope elements chosen for each project in revisions 
         per the table tblReviewProjCharacteristics.  
@@ -12,7 +12,7 @@ as
     1 = the scope element was chosen for the project
     0 = the scope element was not chosen for the project
 */
-        select AppGUID, RevisionID, MTPID, 
+        SELECT AppGUID, RevisionID, MTPID, 
             [New Roadway Facility] = ISNULL([New Roadway Facility], 0),
             [Roadway Relocation] = ISNULL([Roadway Relocation], 0),
             [Add or Remove General Purpose Capacity Lanes] = ISNULL([Add or Remove General Purpose Capacity Lanes], 0),
@@ -48,17 +48,17 @@ as
             [Intelligent Transportation System] = ISNULL([Intelligent Transportation System], 0),
             [Transportation Demand Management] = ISNULL([Transportation Demand Management], 0),
             [Other Preservation/Maintenance] = ISNULL([Other Preservation/Maintenance], 0)
-        from 
+        FROM 
         (
-            select rp.appGUID, rp.RevisionID, rp.MTPID, c.[Name] as ScopeElement
-            from tblReviewProjCharacteristics pc 
-                join tblCharacteristics c ON pc.CharacteristicID = c.[ID]
-                join tblReviewProject rp on pc.appGUID = rp.appGUID 
-        ) as qry
+            SELECT rp.appGUID, rp.RevisionID, rp.MTPID, c.[Name] AS ScopeElement
+            FROM tblReviewProjCharacteristics pc 
+                JOIN tblCharacteristics c ON pc.CharacteristicID = c.[ID]
+                JOIN tblReviewProject rp ON pc.appGUID = rp.appGUID 
+        ) AS qry
         PIVOT 
         (
             COUNT([ScopeElement])
-            for ScopeElement IN 
+            FOR ScopeElement IN 
             (
                 [New Roadway Facility],
         [Roadway Relocation],
@@ -96,5 +96,5 @@ as
         [Transportation Demand Management],
         [Other Preservation/Maintenance]
             )
-        ) as PivotTable
+        ) AS PivotTable
 GO

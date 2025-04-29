@@ -2,22 +2,22 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_NULLS ON
 GO
-CREATE function [dbo].[mtpfn_RevisionProjects](@RevisionID tinyint)
-returns table 
-as
+create FUNCTION [dbo].[mtpfn_ReviewProjects](@RevisionID TINYINT)
+RETURNS TABLE 
+AS
 /*
     Returns a list of attributes for each project in revision @RevisionID.
     Includes total consistency score, as well as scores broken out by measure.
     Includes scope element columns for all possible scope elements as of the 2026 Plan.
 */
-return
+RETURN
 (
     SELECT r.RevisionName, 
         --rp.AppGUID,
         --rp.RevisionID,
         rp.MTPID,
         rp.Title,
-        a.Place as Sponsor,
+        a.Place AS Sponsor,
         rp.ProjDesc,
         rp.ProjectOn,
         rp.ProjectFrom,
@@ -26,15 +26,15 @@ return
         --i.ImpTypeName as PrimaryImptype,
         rp.StartYear,
         rp.CompletionYear,
-        m.StatusName as MTPStatus,
+        m.StatusName AS MTPStatus,
         f.FCName,
         rp.contactName,
         rp.ContactPhone,
         rp.ContactEmail,
         --ps.Score,
-        rp.TotProjCost as ReportedCost,
-        rp.EstCostYear as CostYear,
-        dbo.mtpfn_ScaleProjCost(rp.EstCostYear, rev.CostYear, rev.factor_set, rp.TotProjCost) as ScaledCost,
+        rp.TotProjCost AS ReportedCost,
+        rp.EstCostYear AS CostYear,
+        dbo.mtpfn_ScaleProjCost(rp.EstCostYear, rev.CostYear, rev.factor_set, rp.TotProjCost) AS ScaledCost,
         se.[New Roadway Facility],
         se.[Roadway Relocation],
         se.[Add or Remove General Purpose Capacity Lanes],
@@ -70,34 +70,34 @@ return
         se.[Intelligent Transportation System],
         se.[Transportation Demand Management],
         se.[Other Preservation/Maintenance], 
-        ssp.[TotalScore] as TotalConsistencyScore,
-        ssp.[Supporting Freight Movement] as [FreightMovementScore],
-        ssp.[Supporting Employment] as EmploymentScore,
-        ssp.[Emissions] as EmissionsScore,
-        ssp.[Puget Sound Land and Water] as PugetSoundLandAndWaterScore,
-        ssp.[Transportation Alternatives] as TransportationAltenativesScore,
-        ssp.[Travel Reliability] as TravelReliabilityScore,
-        ssp.[Support for Centers] as SupportForCentersScore,
-        ssp.[Safety & System Security] as SafetyScore,
-        ssp.[Community Benefits] as CommunityBenefitsScore
+        ssp.[TotalScore] AS TotalConsistencyScore,
+        ssp.[Supporting Freight Movement] AS [FreightMovementScore],
+        ssp.[Supporting Employment] AS EmploymentScore,
+        ssp.[Emissions] AS EmissionsScore,
+        ssp.[Puget Sound Land and Water] AS PugetSoundLandAndWaterScore,
+        ssp.[Transportation Alternatives] AS TransportationAltenativesScore,
+        ssp.[Travel Reliability] AS TravelReliabilityScore,
+        ssp.[Support for Centers] AS SupportForCentersScore,
+        ssp.[Safety & System Security] AS SafetyScore,
+        ssp.[Community Benefits] AS CommunityBenefitsScore
     FROM tblReviewProject rp
-        join tblReviewProjEdition pe ON rp.AppGUID = pe.APPGUID
-        join tblRevision r ON rp.RevisionID = r.RevisionID
+        JOIN tblReviewProjEdition pe ON rp.AppGUID = pe.APPGUID
+        JOIN tblRevision r ON rp.RevisionID = r.RevisionID
         --join dbo.mtpfn_RevisionScopeElements(@RevisionID) as se on rp.AppGUID = se.AppGUID
-        join viewRevisionScopeElements as se on rp.AppGUID = se.AppGUID
+        JOIN viewReviewScopeElements AS se ON rp.AppGUID = se.AppGUID
         -- join dbo.mtpfn_RevisionScoresPivoted(@RevisionID) ssp on rp.AppGUID = ssp.AppGUID
-        join dbo.viewRevisionScoresPivoted ssp on rp.AppGUID = ssp.AppGUID
+        JOIN dbo.viewReviewScoresPivoted ssp ON rp.AppGUID = ssp.AppGUID
         LEFT JOIN tblAgency a ON rp.Agency = a.AgencyNo
         LEFT JOIN tblMTPStatus m ON rp.MTPStatus = m.MTPStatusID
         LEFT JOIN tblCounty c ON rp.CountyID = c.CountyID
-        LEFT JOIN tblFuncClass f on rp.FuncClassID = f.FuncClassID
+        LEFT JOIN tblFuncClass f ON rp.FuncClassID = f.FuncClassID
         LEFT JOIN tblImproveType i ON rp.PrimaryImpType = i.ImpTypeID
-        join (select r.SourceEditionID, e.CostYear, e.factor_set
-            from tblRevision r
-                join tblEdition e ON r.EditionID = e.EditionID where r.RevisionID = @RevisionID
-        ) as rev on 1=1
+        JOIN (SELECT r.SourceEditionID, e.CostYear, e.factor_set
+            FROM tblRevision r
+                JOIN tblEdition e ON r.EditionID = e.EditionID WHERE r.RevisionID = @RevisionID
+        ) AS rev ON 1=1
     WHERE 
         rp.RevisionID = @RevisionID
-        and rp.MTPStatus not in ( -1, -3) -- status <> "Not in MTP" or "Cancelled"
+        AND rp.MTPStatus NOT IN ( -1, -3) -- status <> "Not in MTP" or "Cancelled"
 )
 GO

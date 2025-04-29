@@ -2,15 +2,15 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_NULLS ON
 GO
-CREATE view [dbo].[viewRevisionScoresPivoted]
-as 
+CREATE VIEW [dbo].[viewReviewScoresPivoted]
+AS 
 /*
     Calculates Regional Transportation Plan Consistency scores for all projects in revisions.
     Returns one row per project per revision, with separate columns for each measure.  
     It also returns column "TotalScore" which is the sum of all the measure-specific scores for the project.
 */
-    with section_scores as (
-        select AppGUID, 
+    WITH section_scores AS (
+        SELECT AppGUID, 
             MTPID, 
             [Supporting Freight Movement], 
             [Supporting Employment], 
@@ -21,20 +21,20 @@ as
             [Support for Centers], 
             [Safety & System Security], 
             [Community Benefits] 
-        from 
+        FROM 
         (
-            select ssp.AppGUID, ssp.MTPID, ssp.Section, ssp.Score 
-            from viewRevisionScoresBySectionAndProject ssp 
-        ) as qry 
-        pivot 
+            SELECT ssp.AppGUID, ssp.MTPID, ssp.Section, ssp.Score 
+            FROM viewReviewScoresBySectionAndProject ssp 
+        ) AS qry 
+        PIVOT 
         (
-            max(Score) 
-            for Section in ([Community Benefits], [Emissions], [Puget Sound Land and Water], [Safety & System Security], 
+            MAX(Score) 
+            FOR Section IN ([Community Benefits], [Emissions], [Puget Sound Land and Water], [Safety & System Security], 
                             [Support for Centers], [Supporting Employment], [Supporting Freight Movement], [Transportation Alternatives], 
                             [Travel Reliability])
-        ) as PivotTable
+        ) AS PivotTable
     )
-    select s.RevisionID,  ss.*,  s.Score as TotalScore
-    from section_scores ss 
-        left join viewRevisionScoresByProject as s on ss.AppGUID = s.AppGUID
+    SELECT s.RevisionID,  ss.*,  s.Score AS TotalScore
+    FROM section_scores ss 
+        LEFT JOIN viewReviewScoresByProject AS s ON ss.AppGUID = s.AppGUID
 GO
