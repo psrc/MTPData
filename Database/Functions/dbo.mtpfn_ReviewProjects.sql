@@ -2,7 +2,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_NULLS ON
 GO
-create FUNCTION [dbo].[mtpfn_ReviewProjects](@RevisionID TINYINT)
+CREATE FUNCTION [dbo].[mtpfn_ReviewProjects](@RevisionID TINYINT)
 RETURNS TABLE 
 AS
 /*
@@ -15,6 +15,7 @@ RETURN
     SELECT r.RevisionName, 
         --rp.AppGUID,
         --rp.RevisionID,
+        rp.DateStamp as DateLastEdited,
         rp.MTPID,
         rp.Title,
         a.Place AS Sponsor,
