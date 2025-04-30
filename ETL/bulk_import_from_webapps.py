@@ -15,7 +15,7 @@ TARGET_REVISION_ID = 68
 conn_string = "Driver={ODBC Driver 17 for SQL Server};Server=SQLserver;Database=MTPData;trusted_connection=yes;"
 engine = sqlalchemy.create_engine("mssql+pyodbc:///?odbc_connect=%s" % conn_string)
 
-json_file = './ETL/mtp_projects_accepted_250421.json'
+json_file = './ETL/mtp_projects_submitted_250428.json'
 
 try:
     with open(json_file, 'r', encoding='utf-8') as f:
@@ -173,7 +173,6 @@ try:
     with engine.connect() as conn:
         with conn.begin():
            conn.execute(text(sql))
-           pass
     print(f"tables staged and imported into revision {TARGET_REVISION_ID}")
 except Exception as e:
     print(f"Error running the sproc stg.stage_to_review: {e}")
