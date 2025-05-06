@@ -53,6 +53,61 @@ as
 )
 merge dbo.tblReviewProject as target 
 using cte as source ON source.RevisionID = target.RevisionID and source.MTPID = target.MTPID
+when matched and (
+        target.DateStamp != source.DateStamp
+        or target.Agency != source.Agency
+        or target.Title != source.Title
+        or target.ProjDesc != source.ProjDesc
+        or target.TotProjCost != source.TotProjCost
+        or target.ContactName != source.ContactName
+        or target.ContactPhone != source.ContactPhone
+        or target.ContactEmail != source.ContactEmail
+        or target.EstCostYear != source.EstCostYear
+        or target.CompletionYear != source.CompletionYear
+        or target.MTPStatus != source.MTPStatus
+        or target.ProjectOn != source.ProjectOn
+        or target.ProjectFrom != source.ProjectFrom
+        or target.ProjectTo != source.ProjectTo
+        or target.MilePostFrom != source.MilePostFrom
+        or target.MilePostTo != source.MilePostTo
+        or target.CountyID != source.CountyID
+        or target.StateRouteID != source.StateRouteID
+        or target.FuncClassID != source.FuncClassID
+        or target.StartYear != source.StartYear
+        or target.WebLinks != source.WebLinks
+        or target.PlanningProcess != source.PlanningProcess
+        or target.LettersOfConcurrence != source.LettersOfConcurrence
+        or target.FundsDescription != source.FundsDescription
+        or target.FundsCommitted != source.FundsCommitted
+        or target.ApplicationID != source.ApplicationID
+    ) 
+then update set
+    DateStamp = source.DateStamp,
+    Agency = source.Agency,
+    Title = source.Title,
+    ProjDesc = source.ProjDesc,
+    TotProjCost = source.TotProjCost,
+    ContactName = source.ContactName,
+    ContactPhone = source.ContactPhone,
+    ContactEmail = source.ContactEmail,
+    EstCostYear = source.EstCostYear,
+    CompletionYear = source.CompletionYear,
+    MTPStatus = source.MTPStatus,
+    ProjectOn = source.ProjectOn,
+    ProjectFrom = source.ProjectFrom,
+    ProjectTo = source.ProjectTo,
+    MilePostFrom = source.MilePostFrom,
+    MilePostTo = source.MilePostTo,
+    CountyID = source.CountyID,
+    StateRouteID = source.StateRouteID,
+    FuncClassID = source.FuncClassID,
+    StartYear = source.StartYear,
+    WebLinks = source.WebLinks,
+    PlanningProcess = source.PlanningProcess,
+    LettersOfConcurrence = source.LettersOfConcurrence,
+    FundsDescription = source.FundsDescription,
+    FundsCommitted = source.FundsCommitted,
+    ApplicationID = source.ApplicationID
 when not matched then insert (
     AppGUID,
     RevisionID,

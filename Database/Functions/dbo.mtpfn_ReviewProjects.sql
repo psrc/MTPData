@@ -36,6 +36,8 @@ RETURN
         rp.TotProjCost AS ReportedCost,
         rp.EstCostYear AS CostYear,
         dbo.mtpfn_ScaleProjCost(rp.EstCostYear, rev.CostYear, rev.factor_set, rp.TotProjCost) AS ScaledCost,
+        rp.FundsCommitted,
+        rp.FundsDescription as CommittedFundSources,
         se.[New Roadway Facility],
         se.[Roadway Relocation],
         se.[Add or Remove General Purpose Capacity Lanes],
