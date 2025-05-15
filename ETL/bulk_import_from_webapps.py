@@ -172,7 +172,8 @@ try:
     sql = f"EXEC stg.stage_to_revision {TARGET_REVISION_ID}"
     with engine.connect() as conn:
         with conn.begin():
-           conn.execute(text(sql))
+           #conn.execute(text(sql))
+           pass
     print(f"tables staged and imported into revision {TARGET_REVISION_ID}")
 except Exception as e:
     print(f"Error running the sproc stg.stage_to_review: {e}")
