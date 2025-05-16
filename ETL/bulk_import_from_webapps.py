@@ -9,6 +9,7 @@ import sqlalchemy
 from sqlalchemy.sql import select, func
 from sqlalchemy import text
 import uuid
+import openpyxl
 
 TARGET_REVISION_ID = 68
 
@@ -16,6 +17,8 @@ conn_string = "Driver={ODBC Driver 17 for SQL Server};Server=SQLserver;Database=
 engine = sqlalchemy.create_engine("mssql+pyodbc:///?odbc_connect=%s" % conn_string)
 
 json_file = './ETL/mtp_projects_submitted_250428.json'
+
+elmer_conn = psrcelmerpy.ElmerConn()
 
 try:
     with open(json_file, 'r', encoding='utf-8') as f:
@@ -180,4 +183,48 @@ except Exception as e:
     print("staging tables written but not imported into a revision")
 
 
-print("run complete")
+print("initial import run complete")
+
+
+# Separate "Add/Remove GP Lanes" scope element into add vs remove
+#  per the spreadsheet emailed from Kalon to Chris 5/15/2025
+
+excel_file = r'.\ETL\rcp_projects_lane_changes_db_updates_5_15_2025.xlsx'
+
+df = pd.read_excel(excel_file, sheet_name='data')
+
+df = df.rename(columns={'MTP ID': 'MTPID'})
+df = df.rename(columns= {'Add General Purpose Capacity Lanes': 'AddGPLanes',
+                         'Remove General Purpose Capacity Lanes': 'RemoveGPLanes'})
+df = df[['MTPID', 'AddGPLanes', 'RemoveGPLanes']] 
+
+df['AddGPLanes'] = df['AddGPLanes'].replace(1, 36)
+df['RemoveGPLanes'] = df['RemoveGPLanes'].replace(1, 37)
+df[df['RemoveGPLanes'] == 37]
+
+df = pd.melt(df, id_vars=['MTPID'], value_vars=['AddGPLanes', 'RemoveGPLanes'], var_name='ScopeElement', value_name='Response')
+df = df[df['Response'] >0]
+df = df[['MTPID', 'Response']]
+df.to_sql(name='parsed_gplanes_scopelements', schema='stg', con=engine, if_exists='replace', index=False)
+
+qry = f"""insert into tblReviewProjCharacteristics (AppGUID, CharacteristicID)
+select rp.AppGUID, se.Response
+from stg.parsed_gplanes_scopelements se 
+    join tblReviewProject rp on se.mtpid = rp.mtpid 
+where rp.RevisionID = {TARGET_REVISION_ID}"""
+
+#elmer_conn.execute_sql(qry)
+# run the stored procedure to import the data into the main tables
+try:
+    qry = f"""insert into tblReviewProjCharacteristics (AppGUID, CharacteristicID)
+    select rp.AppGUID, se.Response
+    from stg.parsed_gplanes_scopelements se 
+        join tblReviewProject rp on se.mtpid = rp.mtpid 
+    where rp.RevisionID = {TARGET_REVISION_ID}"""
+    with engine.connect() as conn:
+        with conn.begin():
+           conn.execute(text(qry))
+    print(f"scope elements updated per the spreadsheet from 5-15-2025")
+except Exception as e:
+    print(f"Error inserting new scope elements: {e}")
+    print("projects imported but not updated with new scope elements")
