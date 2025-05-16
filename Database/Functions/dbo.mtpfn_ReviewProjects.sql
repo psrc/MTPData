@@ -41,6 +41,8 @@ RETURN
         se.[New Roadway Facility],
         se.[Roadway Relocation],
         se.[Add or Remove General Purpose Capacity Lanes],
+        se.[Add General Purpose Capacity Lanes],
+        se.[Remove General Purpose Capacity Lanes],
         se.[Change Roadway Usage/Operations],
         se.[Add or Remove Business Access Transit Lanes],
         se.[Add or Remove High Occupancy Vehicle Lanes],
