@@ -187,40 +187,34 @@ print("initial import run complete")
 
 
 # Separate "Add/Remove GP Lanes" scope element into add vs remove
-#  per the spreadsheet emailed from Kalon to Chris 5/15/2025
+#  per the spreadsheet emailed from Kalon to Chris 5/15/2025, 
+#   which is saved in the ETL folder of this repo.
 
-excel_file = r'.\ETL\rcp_projects_lane_changes_db_updates_5_15_2025.xlsx'
-
-df = pd.read_excel(excel_file, sheet_name='data')
-
-df = df.rename(columns={'MTP ID': 'MTPID'})
-df = df.rename(columns= {'Add General Purpose Capacity Lanes': 'AddGPLanes',
-                         'Remove General Purpose Capacity Lanes': 'RemoveGPLanes'})
-df = df[['MTPID', 'AddGPLanes', 'RemoveGPLanes']] 
-
-df['AddGPLanes'] = df['AddGPLanes'].replace(1, 36)
-df['RemoveGPLanes'] = df['RemoveGPLanes'].replace(1, 37)
-df[df['RemoveGPLanes'] == 37]
-
-df = pd.melt(df, id_vars=['MTPID'], value_vars=['AddGPLanes', 'RemoveGPLanes'], var_name='ScopeElement', value_name='Response')
-df = df[df['Response'] >0]
-df = df[['MTPID', 'Response']]
-df.to_sql(name='parsed_gplanes_scopelements', schema='stg', con=engine, if_exists='replace', index=False)
-
-qry = f"""insert into tblReviewProjCharacteristics (AppGUID, CharacteristicID)
-select rp.AppGUID, se.Response
-from stg.parsed_gplanes_scopelements se 
-    join tblReviewProject rp on se.mtpid = rp.mtpid 
-where rp.RevisionID = {TARGET_REVISION_ID}"""
-
-#elmer_conn.execute_sql(qry)
-# run the stored procedure to import the data into the main tables
 try:
+    excel_file = r'.\ETL\rcp_projects_lane_changes_db_updates_5_15_2025.xlsx'
+
+    df = pd.read_excel(excel_file, sheet_name='data')
+
+    df = df.rename(columns={'MTP ID': 'MTPID'})
+    df = df.rename(columns= {'Add General Purpose Capacity Lanes': 'AddGPLanes',
+                            'Remove General Purpose Capacity Lanes': 'RemoveGPLanes'})
+    df = df[['MTPID', 'AddGPLanes', 'RemoveGPLanes']] 
+
+    df['AddGPLanes'] = df['AddGPLanes'].replace(1, 36)
+    df['RemoveGPLanes'] = df['RemoveGPLanes'].replace(1, 37)
+    df[df['RemoveGPLanes'] == 37]
+
+    df = pd.melt(df, id_vars=['MTPID'], value_vars=['AddGPLanes', 'RemoveGPLanes'], var_name='ScopeElement', value_name='Response')
+    df = df[df['Response'] >0]
+    df = df[['MTPID', 'Response']]
+    df.to_sql(name='parsed_gplanes_scopelements', schema='stg', con=engine, if_exists='replace', index=False)
+
     qry = f"""insert into tblReviewProjCharacteristics (AppGUID, CharacteristicID)
     select rp.AppGUID, se.Response
     from stg.parsed_gplanes_scopelements se 
         join tblReviewProject rp on se.mtpid = rp.mtpid 
     where rp.RevisionID = {TARGET_REVISION_ID}"""
+
     with engine.connect() as conn:
         with conn.begin():
            conn.execute(text(qry))
