@@ -2,12 +2,10 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_NULLS ON
 GO
-
-
 CREATE PROCEDURE [dbo].[mtpsp_projToRevision]
-	@mtpid  int, 
-	@RevisionID nvarchar(100)
-as
+	@mtpid  INT, 
+	@RevisionID NVARCHAR(100)
+AS
 
 BEGIN TRY
 
@@ -28,9 +26,11 @@ declare @appguid uniqueidentifier
 select @appguid = newid()
 
 INSERT INTO tblReviewProject ( AppGUID, RevisionID, DateStamp, MTPID, Agency, Title, ProjDesc, TotProjCost, Contactname, ContactPhone, ContactEmail, 
-	EstCostYear, CompletionYear, MTPStatus, ProjectOn, ProjectFrom, ProjectTo, MilePostFrom, MilePostTo, CountyID, StateRouteID, FuncClassID, StartYear, WebLinks,
-	PrimaryImpType, DatePosted, DateOverwritten, Edit, ReviewTypeID)
-select @appguid, @RevisionID, GETDATE(), *, NULL, NULL, 1,1
+	EstCostYear, CompletionYear, MTPStatus, ProjectOn, ProjectFrom, ProjectTo, MilePostFrom, MilePostTo, CountyID, StateRouteID, FuncClassID, 
+	StartYear, WebLinks, PrimaryImpType, DatePosted, DateOverwritten, Edit, ReviewTypeID)
+select @appguid, @RevisionID, GETDATE(), MTPID, Agency, Title, ProjDesc, TotProjCost, Contactname, ContactPhone, ContactEmail, 
+	EstCostYear, CompletionYear, MTPStatus, ProjectOn, ProjectFrom, ProjectTo, MilePostFrom, MilePostTo, CountyID, StateRouteID, FuncClassID, 
+	StartYear, WebLinks, PrimaryImpType, NULL, NULL, 1,1
 from tblProject
 where mtpid = @mtpid
 
@@ -47,22 +47,22 @@ WHERE mtpid = @mtpid
 INSERT INTO tblReviewProjEdition
 SELECT @appguid, EditionID
 FROM tblProjEdition
-where MTPID = @mtpid
+WHERE MTPID = @mtpid
 
 INSERT INTO tblReviewProjectLog (AppGUID, NoteDate, Author, Note, RevisionID, LogType)
 SELECT @appguid,  NoteDate, Author, Note, RevisionID, LogType
 FROM tblProjectLog
 WHERE MTPID = @mtpid
 
-insert into tblReviewPrioritization (AppGUID, MTPID, QuestionName, Response)
-select @appguid, mtpid, QuestionName, Response 
-from tblPrioritization
-where MTPID = @mtpid
+INSERT INTO tblReviewPrioritization (AppGUID, MTPID, QuestionName, Response)
+SELECT @appguid, mtpid, QuestionName, Response 
+FROM tblPrioritization
+WHERE MTPID = @mtpid
 
-insert into tblReviewProjScores (AppGUID, MTPID, QuestionName, Response)
-select @AppGUID, mtpid, QuestionName, Response 
-from tblProjScores 
-where MTPID = @mtpid
+INSERT INTO tblReviewProjScores (AppGUID, MTPID, QuestionName, Response)
+SELECT @AppGUID, mtpid, QuestionName, Response 
+FROM tblProjScores 
+WHERE MTPID = @mtpid
 
 INSERT INTO tblReviewProjCosponsors (AppGUID, AgencyNo)
 SELECT @appguid, AgencyNo

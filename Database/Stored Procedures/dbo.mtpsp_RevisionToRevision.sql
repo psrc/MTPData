@@ -2,11 +2,10 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_NULLS ON
 GO
-
 CREATE   PROCEDURE [dbo].[mtpsp_RevisionToRevision] 
-	@MTPID int,
+	@MTPID INT,
 	@FromRevisionID INT,
-	@ToRevisionID int
+	@ToRevisionID INT
 AS 
 BEGIN TRY
 /*
@@ -46,9 +45,13 @@ BEGIN TRAN
 		
 	INSERT INTO tblReviewProject 
 		(AppGUID, RevisionID, DateStamp,  MTPID, Agency, PrimaryImpType, Title, ProjDesc, TotProjCost,  ContactName, 
+		CountyID, MilePostFrom, MilePostTo, StateRouteID, FuncClassID, StartYear, Edit, PlanningProcess,
+		LettersOfConcurrence, FundsDescription, FundsCommitted, ApplicationID,
 		ContactPhone, ContactEmail,  EstCostYear, CompletionYear, MTPStatus, ProjectOn, ProjectFrom, ProjectTo)
-	select @ToAppGUID, @ToRevisionID, GETDATE(),  
+	SELECT @ToAppGUID, @ToRevisionID, GETDATE(),  
 		MTPID, Agency, PrimaryImpType, Title, ProjDesc, TotProjCost, ContactName, 
+		CountyID, MilePostFrom, MilePostTo, StateRouteID, FuncClassID, StartYear, Edit, PlanningProcess,
+		LettersOfConcurrence, FundsDescription, FundsCommitted, ApplicationID,
 		ContactPhone, ContactEmail,  EstCostYear, CompletionYear, MTPStatus, ProjectOn, ProjectFrom, ProjectTo
 	from tblReviewProject
 	where AppGUID = @FromAppGUID
@@ -61,13 +64,13 @@ BEGIN TRAN
 
     INSERT INTO tblReviewPrioritization (AppGUID, MTPID, QuestionName, Response)
     SELECT @ToAppGUID, MTPID, QuestionName, Response 
-    from tblReviewPrioritization
-    where AppGUID = @FromAppGUID
+    FROM tblReviewPrioritization
+    WHERE AppGUID = @FromAppGUID
 
     INSERT INTO tblReviewProjScores (AppGUID, MTPID, QuestionName, Response)
     SELECT @ToAppGUID, MTPID, QuestionName, Response 
-    from tblReviewProjScores
-    where AppGUID = @FromAppGUID
+    FROM tblReviewProjScores
+    WHERE AppGUID = @FromAppGUID
 
 	INSERT INTO tblReviewProjEdition 
 	SELECT @ToAppGUID, EditionID
